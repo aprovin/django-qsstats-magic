@@ -105,7 +105,7 @@ class QuerySetStats(object):
 
         start, _ = get_bounds(start, interval.rstrip('s'))
         _, end = get_bounds(end, interval.rstrip('s'))
-        interval_sql = get_interval_sql(date_field, interval, engine)
+        interval_sql = get_interval_sql(date_field, interval, engine, timezone=start.tzinfo)
 
         kwargs = {'%s__range' % date_field : (start, end)}
         aggregate_data = self.qs.extra(select = {'d': interval_sql}).\
@@ -116,7 +116,7 @@ class QuerySetStats(object):
         def to_dt(d):
             if isinstance(d, basestring):
                 return parse(d, yearfirst=True, default=today)
-            return d
+            return d.replace(tzinfo=start.tzinfo)
 
         data = dict((to_dt(item['d']), item['agg']) for item in aggregate_data)
 

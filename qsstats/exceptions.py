@@ -15,3 +15,6 @@ class DateFieldMissing(QuerySetStatsError):
 
 class QuerySetMissing(QuerySetStatsError):
     pass
+
+class InvalidTimezone(Exception):
+    pass

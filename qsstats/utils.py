@@ -1,7 +1,8 @@
 import datetime
+import pytz
 import re
 from dateutil.relativedelta import relativedelta, MO
-from qsstats.exceptions import InvalidInterval, UnsupportedEngine
+from qsstats.exceptions import InvalidInterval, InvalidTimezone, UnsupportedEngine
 from qsstats import compat
 
 def _remove_time(dt):
@@ -52,10 +53,16 @@ def get_bounds(dt, interval):
     return begin, end
 
 
-def get_interval_sql(date_field, interval, engine):
+def get_interval_sql(date_field, interval, engine, timezone=pytz.utc):
     ''' Returns SQL clause that calculates the beginning of interval
         date_field belongs to.
     '''
+
+    try:
+        if engine == 'postgresql':
+            timezone.zone
+    except:
+        raise InvalidTimezone('timezone should be a pytz.timezone instance')
 
     SQL = {
         'mysql': {
@@ -67,12 +74,12 @@ def get_interval_sql(date_field, interval, engine):
             'years': "DATE_FORMAT(`" + date_field +"`, '%%Y-01-01')",
         },
         'postgresql': {
-            'minutes': "date_trunc('minute', %s)" % date_field,
-            'hours': "date_trunc('hour', %s)" % date_field,
-            'days': "date_trunc('day', %s)" % date_field,
-            'weeks': "date_trunc('week', %s)" % date_field,
-            'months': "date_trunc('month', %s)" % date_field,
-            'years': "date_trunc('year', %s)" % date_field,
+            'minutes': "date_trunc('minute', %s at time zone '%s')" % (date_field, timezone.zone),
+            'hours': "date_trunc('hour', %s at time zone '%s')" % (date_field, timezone.zone),
+            'days': "date_trunc('day', %s at time zone '%s')" % (date_field, timezone.zone),
+            'weeks': "date_trunc('week', %s at time zone '%s')" % (date_field, timezone.zone),
+            'months': "date_trunc('month', %s at time zone '%s')" % (date_field, timezone.zone),
+            'years': "date_trunc('year', %s at time zone '%s')" % (date_field, timezone.zone),
         },
         'sqlite': {
             'minutes': "strftime('%%Y-%%m-%%d %%H:%%M', `" + date_field + "`)",
