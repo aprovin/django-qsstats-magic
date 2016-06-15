@@ -5,8 +5,9 @@ from functools import partial
 import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
+import operator
 
-from django.db.models import Count
+from django.db.models import Count, Min, Max
 from django.db import DatabaseError, transaction
 from django.conf import settings
 
@@ -119,6 +120,8 @@ class QuerySetStats(object):
             return d.replace(tzinfo=start.tzinfo)
 
         data = dict((to_dt(item['d']), item['agg']) for item in aggregate_data)
+        arithmetic_methods = {Min: min, Max: max, Count: operator.add}
+        aggregate_method = arithmetic_methods[aggregate.__class__] if aggregate.__class__ in arithmetic_methods else operator.add
 
         stat_list = []
         dt = start
@@ -126,7 +129,7 @@ class QuerySetStats(object):
             idx = 0
             value = 0
             for i in range(num):
-                value = value + data.get(dt, 0)
+                value = aggregate_method(value, data.get(dt, 0))
                 if i == 0:
                     stat_list.append((dt, value,))
                     idx = len(stat_list) - 1
