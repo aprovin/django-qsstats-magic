@@ -131,6 +131,8 @@ class QuerySetStats(object):
             for i in range(num):
                 value = aggregate_method(value, data.get(dt, 0))
                 if i == 0:
+                    if aggregate_method == min:
+                        value = data.get(dt, 0)
                     stat_list.append((dt, value,))
                     idx = len(stat_list) - 1
                 elif i == num - 1:
