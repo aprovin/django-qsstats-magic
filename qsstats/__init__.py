@@ -126,7 +126,7 @@ class QuerySetStats(object):
         stat_list = []
         dt = start
         if data:
-            default_value = data.values()[0].__class__()
+            default_value = list(data.values())[0].__class__()
         else:
             default_value = 0
         while dt < end:
